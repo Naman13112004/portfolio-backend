@@ -44,6 +44,45 @@ app.post('/api/blogs', async (req, res) => {
   }
 });
 
+app.put('/api/blogs/:id', async (req, res) => {
+  const { password, title, content } = req.body;
+  
+  // Verify the fixed password
+  if (password !== process.env.ADMIN_PASSWORD) {
+    return res.status(401).json({ error: 'Unauthorized: Incorrect Password' });
+  }
+
+  try {
+    const blog = await Blog.findByIdAndUpdate(
+      req.params.id, 
+      { title, content }, 
+      { new: true } // Returns the updated document
+    );
+    if (!blog) return res.status(404).json({ error: 'Blog not found' });
+    res.json(blog);
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to update blog' });
+  }
+});
+
+app.delete('/api/blogs/:id', async (req, res) => {
+  const { password } = req.body;
+  
+  // Verify the fixed password
+  if (password !== process.env.ADMIN_PASSWORD) {
+    return res.status(401).json({ error: 'Unauthorized: Incorrect Password' });
+  }
+
+  try {
+    const blog = await Blog.findByIdAndDelete(req.params.id);
+    if (!blog) return res.status(404).json({ error: 'Blog not found' });
+    
+    res.json({ message: 'Blog deleted successfully' });
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to delete blog' });
+  }
+});
+
 mongoose.connect(process.env.MONGO_URI!)
   .then(() => app.listen(process.env.PORT, () => console.log('Backend running')))
   .catch(err => console.log(err));
